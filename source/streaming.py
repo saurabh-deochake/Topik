@@ -41,12 +41,12 @@ def main():
     #requests.packages.urllib3.disable_warnings('InsecurePlatformWarning')
    
 
-    #try: 
+    try: 
     stream.filter(locations = nj)
     print ("Streaming started...")
-    #except:
-    #    print ("error!")
-    #    stream.disconnect()
+    except:
+        print ("error!")
+        stream.disconnect()
 
 if __name__ == '__main__':
     main()

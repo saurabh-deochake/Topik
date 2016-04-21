@@ -44,22 +44,26 @@ class SListener(StreamListener):
         #---------Extract fields from post------
         data = {}
         
-        data["p_id"] = json_status["id_str"]
-        data["timestamp"] = json_status["timestamp_ms"]
-        data["text"] = json_status["text"]
-        data["u_id"] = json_status["user"]["id_str"]
+        if("retweeted_status" not in json_status):
+			data["p_id"] = json_status["id_str"]
+			data["timestamp"] = json_status["timestamp_ms"]
+			data["text"] = json_status["text"]
+			data["u_id"] = json_status["user"]["id_str"]
+			data["v_id"] =json_status["in_reply_to_user_id_str"]
                 
-        lat = 0
-        lng =0
-        for l in (json_status["place"]["bounding_box"]["coordinates"][0]):
-			lng += l[0]
-			lat += l[1]
+			lat = 0
+			lng =0
+			for l in (json_status["place"]["bounding_box"]["coordinates"][0]):
+				lng += l[0]
+				lat += l[1]
 
-        lng /= len(json_status["place"]["bounding_box"]["coordinates"][0])
-        lat /= len(json_status["place"]["bounding_box"]["coordinates"][0])
+			lng /= len(json_status["place"]["bounding_box"]["coordinates"][0])
+			lat /= len(json_status["place"]["bounding_box"]["coordinates"][0])
         
-        data["lng"] = lng
-        data["lat"] = lat
+			data["lng"] = lng
+			data["lat"] = lat
+        else:
+			return
         #---------------------------------------
         
         #--Stop and stem words------------------
@@ -74,7 +78,6 @@ class SListener(StreamListener):
         for w in words:
 			stemwords.append(stemmer.stem(w))
         
-        my_list = ["Hello", "world"]
         data["text"] = " ".join(stemwords)
         
         #---------------------------------------
@@ -84,11 +87,33 @@ class SListener(StreamListener):
                              user="spd",         # your username
                              passwd="meraPassword",  # your password
                              db="topik")        # name of the data base
-        cur = db.cursor()
-        cur.execute("INSERT INTO posts (ts,uid,words,lat,lng,pid) VALUES (%s,%s,%s,%s,%s,%s)", (data["timestamp"], data["u_id"], data["text"], data["lat"], data["lng"],data["p_id"]))
-        print "Auto Increment ID: %s" % cur.lastrowid
+
+        #----Post-------------------------------
+        curP = db.cursor()
+        curP.execute("INSERT INTO posts (ts,uid,words,lat,lng,pid) VALUES (%s,%s,%s,%s,%s,%s)", (data["timestamp"], data["u_id"], data["text"], data["lat"], data["lng"],data["p_id"]))
+        print "Auto Increment ID: %s" % curP.lastrowid
+        
+        #----Graph------------------------------
+        curGE = db.cursor()
+        curGVu = db.cursor()
+        curGVv = db.cursor()
+        
+        
+        if(data["v_id"]):
+			curGE.execute("INSERT IGNORE INTO graph_edges SET uid = %s, vid = %s;", (data["u_id"],data["v_id"]))
+			#print "Auto Increment ID: %s" % curGE.lastrowid
+			curGVv.execute("INSERT IGNORE INTO graph_vertices SET uid = %s;",[data["v_id"]]);
+			print data["v_id"]
+        
+        curGVu.execute("INSERT IGNORE INTO graph_vertices SET uid=%s;",[data["u_id"]]);
+        print data["u_id"]
+        #---------------------------------------
+        
         db.commit()
-        cur.close()
+        curP.close()
+        curGE.close()
+        curGVu.close()
+        curGVv.close()
         db.close()
         #---------------------------------------
         
