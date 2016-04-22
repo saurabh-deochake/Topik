@@ -49,7 +49,8 @@ class SListener(StreamListener):
 			data["timestamp"] = json_status["timestamp_ms"]
 			data["text"] = json_status["text"]
 			data["u_id"] = json_status["user"]["id_str"]
-			data["v_id"] =json_status["in_reply_to_user_id_str"]
+			data["r_p_id"] = json_status["in_reply_to_status_id_str"]
+			data["r_u_id"] = json_status["in_reply_to_user_id_str"]
                 
 			lat = 0
 			lng =0
@@ -90,7 +91,7 @@ class SListener(StreamListener):
 
         #----Post-------------------------------
         curP = db.cursor()
-        curP.execute("INSERT INTO posts (ts,uid,words,lat,lng,pid) VALUES (%s,%s,%s,%s,%s,%s)", (data["timestamp"], data["u_id"], data["text"], data["lat"], data["lng"],data["p_id"]))
+        curP.execute("INSERT INTO posts (ts,uid,words,lat,lng,pid,rpid,ruid) VALUES (%s,%s,%s,%s,%s,%s,%s,%s)", (data["timestamp"], data["u_id"], data["text"], data["lat"], data["lng"],data["p_id"],data["r_p_id"],data["r_u_id"]))
         print "Auto Increment ID: %s" % curP.lastrowid
         
         #----Graph------------------------------
@@ -99,11 +100,11 @@ class SListener(StreamListener):
         curGVv = db.cursor()
         
         
-        if(data["v_id"]):
-			curGE.execute("INSERT IGNORE INTO graph_edges SET uid = %s, vid = %s;", (data["u_id"],data["v_id"]))
+        if(data["r_u_id"]):
+			curGE.execute("INSERT IGNORE INTO graph_edges SET uid = %s, vid = %s;", (data["u_id"],data["r_u_id"]))
 			#print "Auto Increment ID: %s" % curGE.lastrowid
-			curGVv.execute("INSERT IGNORE INTO graph_vertices SET uid = %s;",[data["v_id"]]);
-			print data["v_id"]
+			curGVv.execute("INSERT IGNORE INTO graph_vertices SET uid = %s;",[data["r_u_id"]]);
+			print data["r_u_id"]
         
         curGVu.execute("INSERT IGNORE INTO graph_vertices SET uid=%s;",[data["u_id"]]);
         print data["u_id"]
