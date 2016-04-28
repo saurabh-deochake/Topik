@@ -51,7 +51,10 @@ class SListener(StreamListener):
 			data["u_id"] = json_status["user"]["id_str"]
 			data["r_p_id"] = json_status["in_reply_to_status_id_str"]
 			data["r_u_id"] = json_status["in_reply_to_user_id_str"]
-                
+			data["handle"] = json_status["user"]["screen_name"]
+			data["name"] = json_status["user"]["name"]
+			data["profile_image"] = json_status["user"]["profile_image_url"]
+
 			lat = 0
 			lng =0
 			for l in (json_status["place"]["bounding_box"]["coordinates"][0]):
@@ -91,8 +94,8 @@ class SListener(StreamListener):
 
         #----Post-------------------------------
         curP = db.cursor()
-        curP.execute("INSERT INTO posts (ts,uid,words,lat,lng,pid,rpid,ruid) VALUES (%s,%s,%s,%s,%s,%s,%s,%s)", (data["timestamp"], data["u_id"], data["text"], data["lat"], data["lng"],data["p_id"],data["r_p_id"],data["r_u_id"]))
-        print "Auto Increment ID: %s" % curP.lastrowid
+        curP.execute("REPLACE INTO posts SET ts=%s, uid=%s,words=%s,lat=%s,lng=%s,pid=%s,rpid=%s,ruid=%s;", (data["timestamp"], data["u_id"], data["text"], data["lat"], data["lng"],data["p_id"],data["r_p_id"],data["r_u_id"]))
+        #print "Auto Increment ID: %s" % curP.lastrowid
         
         #----Graph------------------------------
         curGE = db.cursor()
@@ -103,11 +106,11 @@ class SListener(StreamListener):
         if(data["r_u_id"]):
 			curGE.execute("INSERT IGNORE INTO graph_edges SET uid = %s, vid = %s;", (data["u_id"],data["r_u_id"]))
 			#print "Auto Increment ID: %s" % curGE.lastrowid
-			curGVv.execute("INSERT IGNORE INTO graph_vertices SET uid = %s;",[data["r_u_id"]]);
-			print data["r_u_id"]
+			curGVv.execute("INSERT IGNORE INTO graph_vertices SET uid = %s, name = %s, handle = %s, profile_image = %s;",(data["r_u_id"],data["name"],data["handle"],data["profile_image"]));
+			#print data["r_u_id"]
         
-        curGVu.execute("INSERT IGNORE INTO graph_vertices SET uid=%s;",[data["u_id"]]);
-        print data["u_id"]
+        curGVu.execute("REPLACE INTO graph_vertices SET uid=%s, name = %s, handle = %s, profile_image = %s;",(data["u_id"],data["name"],data["handle"],data["profile_image"]));
+        #print data["u_id"]
         #---------------------------------------
         
         db.commit()

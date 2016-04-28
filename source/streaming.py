@@ -27,7 +27,7 @@ api = tweepy.API(auth)
 
 def main():
     
-    track = ['dundundundun']
+#    track = ['dundundundun']
     
     full = [-180,-90,180,90]
     rutgers=[ -74.496245,-40.464329, -74.374364,40.540052 ]
