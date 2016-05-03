@@ -1,0 +1,164 @@
+	<!DOCTYPE html>
+	<html lang="en">
+	<head>
+		<title>TOPiK</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css">
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+		<script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>
+		<!--	<script type="text/javascript" src="https://code.jquery.com/jquery-2.2.3.min.js"> </script>	-->
+		<link rel="stylesheet" href="http://cdn.datatables.net/1.10.11/css/jquery.dataTables.min.css">
+		<script src="http://cdn.datatables.net/1.10.11/js/jquery.dataTables.min.js"></script>
+		<style>
+		#map {
+        width: 430px;
+        height: 345px;
+      }
+	  body{
+	  background-image:url(bg.jpg);
+	  opacity:.9;	  
+	  }
+	 
+	  
+	  
+    </style>
+	</head>
+	
+	<body >
+	<nav class="navbar navbar-inverse">
+	<div class="container-fluid">
+		<div class="navbar-header">
+		<a class="navbar-brand" href="#">TOPiK</a>
+		</div>
+	</div>
+	</nav>
+	<div class="modal-body row">
+		<div class="col-md-4">
+		<div class="form-group">
+			<!--textarea class="input-large" placeholder="Enter key words seperated by single space" rows="6" id="keyWords"></textarea-->
+			<input type="textarea" class="form-control" placeholder="Enter key words seperated by commas" rows="6" id="keyWords">
+		</div>
+		
+		<div class="form-group">
+			<input type="number" class="form-control" placeholder="enter longitude" id="lon">
+		</div>
+	
+		<div class="form-group">
+			<input type="number" class="form-control" placeholder="enter lattitude" id="lat">
+		</div>
+	
+		<div class="form-group">
+			<input type="number" class="form-control" placeholder="radius" id="rad">
+		</div>
+		
+		<div class="form-group">
+			<input type="number" class="form-control" placeholder="Enter the value of K here" id="k">
+		</div>
+	 
+		<div class="form-group">
+		<button onclick="displayInput()" class="btn btn-info">Submit</button>
+		</div>
+		<!--
+		<div class="form-group">
+		<pre id="inputDisplay"></pre>
+		</div>
+		-->
+		
+		<div id="map"></div>
+		<script src="https://maps.googleapis.com/maps/api/js"
+         async defer></script>
+		 
+		 
+		 <script>
+			function displayInput() {
+			var keyWordsEntered = document.getElementById("keyWords").value;
+			var longitude = document.getElementById("lon").value;
+			var lattitude = document.getElementById("lat").value;
+			var radius = document.getElementById("rad").value;
+			var k = document.getElementById("k").value;
+			<!--document.getElementById("inputDisplay").innerHTML = "Key Words:" + keyWordsEntered +"<br>"+ "Longitude:" +longitude+"<br>"+ "Lattitude:" + lattitude +"<br>"+"Radius:" + radius;-->
+			initMap(longitude,lattitude);
+			getServerResponse(keyWordsEntered,longitude,lattitude,radius,k);
+			}
+		</script>
+		
+		<script>
+			function getServerResponse(keyWordsEntered,longitude,lattitude,radius,k) {
+			<!--Your code to get response from DB goes here-->
+				$.ajax({
+					url: "http://127.0.0.1:5000/users?query="+keyWordsEntered+"&lat="+lattitude+"&lng="+longitude+"&rad="+radius+"&k="+k,
+					success: function(result){
+					showTable(JSON.parse(result));
+				}});
+			}
+		</script>
+		
+		<script>
+		
+		
+		function initMap(longitude,lattitude) {
+					var latlng = new google.maps.LatLng(longitude, lattitude);
+					var mapDiv = document.getElementById('map');
+					var map = new google.maps.Map(mapDiv, {
+					center: latlng,
+					zoom: 8
+				});}
+		
+		</script>
+	</div>
+	<div class="col-md-8">
+    <!-- Your second column here -->
+	<table style="width:100%" id="postTable" class="display" ></table>
+	</div>
+	
+</div>
+<script>
+<!-- this is the dummy data-->
+<!-- You will hit the jason file and get the data here and replace this with actual data-->
+
+// var dataSet = [
+//     // [ '<img src="http://i.telegraph.co.uk/multimedia/archive/03589/Wellcome_Image_Awa_3589699k.jpg" height="42" width="42">',"Saurabh Singh", "24"],
+//     // [ '<img src="http://i.telegraph.co.uk/multimedia/archive/03589/Wellcome_Image_Awa_3589699k.jpg" height="42" width="42">',"Manjusha Ray", "25"]\
+//     { "a":"http://i.telegraph.co.uk/multimedia/archive/03589/Wellcome_Image_Awa_3589699k.jpg","b":"Saurabh Singh", "c":"24"},
+//     { "a":"http://i.telegraph.co.uk/multimedia/archive/03589/Wellcome_Image_Awa_3589699k.jpg","b":"Manjusha Ray","c":"25"}
+// 	// [ "Alok Singh", "21" ],
+// 	// [ "Alok Singh", "21" ],
+//  //    [ "Saurabh Deochake", "20" ],
+// 	// [ "Shreepad Patil", "18" ],
+//  //    [ "Harshil Patel", "17" ],
+// 	// [ "Carol Lin", "15" ],
+//  //    [ "Saurabh Gokhle", "14" ],
+// 	// [ "Vadika Babu", "13.4" ],
+//  //    [ "Sonal Oberoi", "-4" ],
+// 	// [ "Sanyukta Patil", "-2" ],
+//  //    [ "Pedro Davis", "4.2" ]
+// ];
+ 
+function showTable(dataSet){
+	$('#postTable').DataTable( {
+		"columnDefs": [ {
+			"targets": 0,
+			"data": "image",
+			"render": function ( data, type, full, meta ) {
+				console.log(data);
+				return '<img src="'+data+'"height="42" width="42">';
+			}
+		} ],
+		data: dataSet,
+		columns: [
+			{ title: "Image", data: "image"},
+			{ title: "Name", data: "name" },
+			{ title: "Handle", data: "handle"}
+		]
+	} );
+}
+ 
+$(document).ready(function() {
+    
+} );
+
+</script>
+	</body>
+	</html>
+	

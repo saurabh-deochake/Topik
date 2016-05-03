@@ -1,3 +1,8 @@
+'''
+Created on Apr 19, 2016
+
+@author: shreepad
+'''
 import MySQLdb
 from nltk.stem.snowball import SnowballStemmer
 from nltk.corpus import stopwords
@@ -123,15 +128,13 @@ class Query():
 		return
 	
 	def findTopK(self,kLim = 5, alpha = 0.5):
-		#query.findTopTextResults()
-		#query.findTopDistResults()
+		self.findTopTextResults()
+		self.findTopDistResults()
 		
 		LDist = []
 		LText = []
 		
 		topKList = []
-		
-		raw_input("Press Enter to continue...")
 		
 		db = MySQLdb.connect(host="localhost",    # your host, usually localhost
                              user="spd",         # your username
@@ -142,24 +145,40 @@ class Query():
 		curDist = db.cursor()
 		curText = db.cursor()
 		
-		curDist.execute("SELECT uid,SUM(score) FROM temp_distScore GROUP BY uid HAVING SUM(score) >0 ORDER BY sum(score) DESC;")
-		curText.execute("SELECT uid,SUM(score) FROM temp_textScore GROUP BY uid HAVING SUM(score) >0 ORDER BY sum(score) DESC;")
+		curDist.execute("SELECT uid,AVG(score) FROM temp_distScore GROUP BY uid HAVING AVG(score) >0 ORDER BY AVG(score) DESC;")
+		curText.execute("SELECT uid,(SUM(score)/40) FROM temp_textScore GROUP BY uid HAVING SUM(score) >0 ORDER BY SUM(score) DESC;")
 		
 		LDist.extend(list(curDist.fetchall()))
 		LText.extend(list(curText.fetchall()))
+		
+		curDist.close()
+		curText.close()
+		db.close
 		
 		k = 0
 		i = 0
 		buff = []
 		
-		raw_input("Press Enter to continue...")
-		for i in range(len(LDist)):
-			UserL1 = LDist[i][0]
-			ScoreL1 = LDist[i][1]
+		Maxlength = len(LDist)
+		if(len(LDist)<len(LText)):
+			Maxlength = len(LText)
+		
+		
+		for i in range(Maxlength):
 			
-			UserL2 = LText[i][0]
-			ScoreL2 = LText[i][1]
+			if(i<len(LDist)):
+				UserL1 = LDist[i][0]
+				ScoreL1 = LDist[i][1]
+			else:
+				UserL1 = ''
+				ScoreL1 = 0
 			
+			if(i<len(LText)):
+				UserL2 = LText[i][0]
+				ScoreL2 = LText[i][1]
+			else:
+				UserL2 = ''
+				ScoreL2 = 0
 			threshold = alpha*ScoreL1 + (1-alpha)*ScoreL2
 			
 			if UserL1 == UserL2:
@@ -181,10 +200,6 @@ class Query():
 				else:
 					buff.append({"user":UserL2, "scoreLB":(1-alpha)*ScoreL2, "scoreUB":threshold,"LB" : 2})
 			
-			print buff
-			raw_input("Press Enter to continue...Before Update")
-			print threshold
-			
 			#Update buffers
 			for b in buff:
 				if (b["LB"]==1):
@@ -195,7 +210,6 @@ class Query():
 			tempBuff = []
 			for b in buff:
 				if (b["scoreLB"]>threshold):
-					print "This element is being considered: ", b
 					topKList.append(b)
 					k += 1
 				else:
@@ -204,20 +218,13 @@ class Query():
 			buff = tempBuff
 			
 			if(k>=kLim):
-				return topKList
-			print buff
-			raw_input("Press Enter to continue...After Update")
-		return topKList
+				return topKList[:kLim]
+		return topKList[:kLim]
 
-query = Query("forget women",41,-72,100)
+#query = Query("project",40.497867,-74.446673,5)
 
-query.processQuery()
+#query.processQuery()
 
-#query.showProcessedText()
-
-#query.findTopTextResults()
-#query.findTopDistResults()
-
-k=5
-alpha = 0.5
-print query.findTopK(k,alpha)
+#k=5
+#alpha = 0.5
+#print query.findTopK(k,alpha)
